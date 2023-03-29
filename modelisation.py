@@ -10,7 +10,7 @@ curseur.execute("""
                     nom TEXT NOT NULL,
                     email TEXT NOT NULL,
                     mdp TEXT NOT NULL,
-                    token BLOB NOT NULL
+                    token TEXT NOT NULL
                 )
                 
                 """)

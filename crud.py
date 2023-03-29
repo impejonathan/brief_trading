@@ -1,6 +1,6 @@
 import sqlite3
 
-connexion = sqlite3.connect('bdd.db')
+connexion = sqlite3.connect('db_trading.db')
 curseur = connexion.cursor()
 
 
@@ -13,14 +13,19 @@ def creer_utilisateur(nom, email, mdp, token):
     """, (nom, email, mdp, token))
     connexion.commit()
     return curseur.lastrowid
-    
+
+
+# creer_utilisateur("jonathan", "jonathan@gmail.com", "azerty123", "123")
+ 
 def lire_utilisateurs():
     curseur.execute("""
         SELECT * FROM utilisateur
     """)
     utilisateurs = curseur.fetchall()
     return utilisateurs
-    
+
+lire_utilisateurs() 
+
 def lire_utilisateur_par_id(id_utilisateur):
     curseur.execute("""
         SELECT * FROM utilisateur
