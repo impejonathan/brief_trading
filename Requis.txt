@@ -3,7 +3,7 @@ FAIT - obtenir le JWT avec le mail et le MDP
 FAIT - vérifier la validité du JWT
 FAIT - voir ses actions
 FAIT - Voir les actions des personnes que l’on suit
- - Obtenir l'id d'un utilisateur depuis son mail et son JWT
+FAIT - Obtenir l'id d'un utilisateur depuis son mail, son JWT
 
 Create: 
 FAIT - Créer un utilisateur
@@ -22,3 +22,4 @@ Delete:
 FAIT - Supprimer une action
 FAIT - Supprimer un utilisateur 
 FAIT - arrêté de suivre
+
