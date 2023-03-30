@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-import crud
+import antoine.crud
 import hashlib
 
 
@@ -48,21 +48,21 @@ async def test():
 
 @app.post("/api/auth/inscription")
 async def inscription(user:UserRegister):
-    if len(crud.get_users_by_mail(user.email)) > 0:
+    if len(antoine.crud.get_users_by_mail(user.email)) > 0:
         raise HTTPException(status_code=403, detail="L'email fourni possède déjà un compte")
     else:
-        id_user = crud.creer_utilisateur(user.nom, user.email, hasher_mdp(user.mdp), None)
+        id_user = antoine.crud.creer_utilisateur(user.nom, user.email, hasher_mdp(user.mdp), None)
         token = jwt.encode({
             "email" : user.email,
             "mdp" : user.mdp,
             "id" : id_user
         }, SECRET_KEY, algorithm=ALGORITHM)
-        crud.update_token(id_user, token)
+        antoine.crud.update_token(id_user, token)
         return {"token" : token}
 
 @app.post("/api/auth/token")
 async def login_token(user:UserLogin):
-    resultat = crud.obtenir_jwt_depuis_email_mdp(user.email, hasher_mdp(user.mdp))
+    resultat = antoine.crud.obtenir_jwt_depuis_email_mdp(user.email, hasher_mdp(user.mdp))
     if resultat is None:
         raise HTTPException(status_code=401, detail="Login ou mot de passe invalide")
     else:
@@ -72,6 +72,6 @@ async def login_token(user:UserLogin):
 async def mes_articles(req: Request):
     try:
         decode = decoder_token(req.headers["Authorization"])
-        return {"id_user" : crud.get_id_user_by_email(decode["email"])[0]}
+        return {"id_user" : antoine.crud.get_id_user_by_email(decode["email"])[0]}
     except:
         raise HTTPException(status_code=401, detail="Vous devez être identifiés pour accéder à cet endpoint")

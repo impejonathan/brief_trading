@@ -212,7 +212,7 @@ class Asso_suivi_suiveur(BaseModel):
     id_suivi : int
     id_suiveur : int
 
-@app.post("/creer_asso_suivi_suiveur")
+@app.post("/creer_asso_suivi_suiveur") #OK
 async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -220,11 +220,12 @@ async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
         VALUES (?,?)
     """, (utilisateur.id_suivi, utilisateur.id_suiveur))
     utilisateurs = curseur.fetchall()
+    connexion.commit()
     return utilisateurs
 
 
-@app.get("/lire_asso_suivi_suiveur_par_suivi")
-async def lire_asso_suivi_suiveur_par_suivi(id_suivi:Asso_suivi_suiveur):
+@app.get("/lire_asso_suivi_suiveur_par_suivi") #OK
+async def lire_asso_suivi_suiveur_par_suivi(id_suivi: int):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM asso_suivi_suiveur
@@ -233,8 +234,8 @@ async def lire_asso_suivi_suiveur_par_suivi(id_suivi:Asso_suivi_suiveur):
     assos = curseur.fetchall()
     return assos
 
-@app.get("/lire_asso_suivi_suiveur_par_suiveur")
-async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur:Asso_suivi_suiveur):
+@app.get("/lire_asso_suivi_suiveur_par_suiveur") #OK
+async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM asso_suivi_suiveur
@@ -243,33 +244,33 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur:Asso_suivi_suiveur):
     assos = curseur.fetchall()
     return assos
 
-@app.put("/mettre_a_jour_asso_suivi_suiveur")
-async def mettre_a_jour_asso_suivi_suiveur(id_asso, id_suivi=None, id_suiveur=None):
-    curseur = connexion.cursor()
-    update_clause = ""
-    update_values = []
-    if id_suivi:
-        update_clause += "id_suivi=?, "
-        update_values.append(id_suivi)
-    if id_suiveur:
-        update_clause += "id_suiveur=?, "
-        update_values.append(id_suiveur)
-    update_clause = update_clause[:-2]
-    update_values.append(id_asso)
-    curseur.execute(f"""
-        UPDATE asso_suivi_suiveur
-        SET {update_clause}
-        WHERE id=?
-    """, tuple(update_values))
-    connexion.commit()
+# @app.put("/mettre_a_jour_asso_suivi_suiveur")
+# async def mettre_a_jour_asso_suivi_suiveur(id_asso, id_suivi=None, id_suiveur=None):
+#     curseur = connexion.cursor()
+#     update_clause = ""
+#     update_values = []
+#     if id_suivi:
+#         update_clause += "id_suivi=?, "
+#         update_values.append(id_suivi)
+#     if id_suiveur:
+#         update_clause += "id_suiveur=?, "
+#         update_values.append(id_suiveur)
+#     update_clause = update_clause[:-2]
+#     update_values.append(id_asso)
+#     curseur.execute(f"""
+#         UPDATE asso_suivi_suiveur
+#         SET {update_clause}
+#         WHERE id=?
+#     """, tuple(update_values))
+#     connexion.commit()
 
-@app.put("/supprimer_asso_suivi_suiveur")
-async def supprimer_asso_suivi_suiveur(id_asso):
+@app.delete("/supprimer_asso_suivi_suiveur") #OK
+async def supprimer_asso_suivi_suiveur(id_asso:Asso_suivi_suiveur):
     curseur = connexion.cursor()
     curseur.execute("""
         DELETE FROM asso_suivi_suiveur
-        WHERE id=?
-    """, (id_asso,))
+        WHERE id_suivi=? AND id_suiveur=?
+    """, (id_asso.id_suivi,id_asso.id_suiveur))
     connexion.commit()
 
 
