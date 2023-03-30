@@ -12,7 +12,7 @@ def creer_utilisateur(nom, email, mdp, token):
         VALUES(?,?,?,?)
     """, (nom, email, mdp, token))
     connexion.commit()
-    return curseur.lastrowid
+    
 
 
 # creer_utilisateur("jonathan", "jonathan@gmail.com", "azerty123", "123")

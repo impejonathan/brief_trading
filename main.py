@@ -1,44 +1,61 @@
-from fastapi import FastAPI
 from pydantic import BaseModel
 import sqlite3
+import hashlib
+import secrets
+from fastapi import FastAPI, HTTPException
 
 
 connexion = sqlite3.connect('db_trading.db')
 app = FastAPI()
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get("/test")
-async def test():
-    liste = [i for i in range(100) if i%5==0]
-    return{"la liste": liste}
-
 
 # UTILISATEUR ---------------------------------------------------------------------------------------
 
 class Utilisateur(BaseModel):
-    id : int
+    # id : int
     nom: str
     email: str
     mdp: str
-    token: str
+    # token: str
+
+
+# @app.post("/creer_utilisateur")  # OK
+# async def creer_utilisateur(utilisateur:Utilisateur):
+#     curseur = connexion.cursor()
+#     curseur.execute("""
+#         INSERT INTO utilisateur(nom, email, mdp, token)
+#         VALUES(?,?,?,?)
+#     """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token))
+#     connexion.commit()
 
 
 @app.post("/creer_utilisateur")
 async def creer_utilisateur(utilisateur: Utilisateur):
     curseur = connexion.cursor()
     curseur.execute("""
-        INSERT INTO utilisateur(nom, email, mdp, token)
-        VALUES(?,?,?,?)
-    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token))
-    connexion.commit()
-    utilisateur.id = curseur.lastrowid
-    return utilisateur
+        SELECT * FROM utilisateur WHERE email = ?
+    """, (utilisateur.email,))
+    res = curseur.fetchall()
+
+    if res:
+        raise HTTPException(status_code=400, detail="Un utilisateur avec cet email existe déjà")
+    else:
+        # Hash du mot de passe
+        mdp_hash = hashlib.sha256(utilisateur.mdp.encode()).hexdigest()
+
+        # Création de l'utilisateur avec un token unique
+        token = secrets.token_hex(16)
+        curseur.execute("""
+            INSERT INTO utilisateur(nom, email, mdp, token)
+            VALUES (?, ?, ?, ?)
+        """, (utilisateur.nom, utilisateur.email, mdp_hash, token))
+        connexion.commit()
+
+        # Renvoi de l'utilisateur avec son token
+        return {"id": curseur.lastrowid, "nom": utilisateur.nom, "email": utilisateur.email, "token": token}
 
 
-@app.get("/lire_utilisateurs")
+@app.get("/lire_utilisateurs") #OK
 async def lire_utilisateurs():
     curseur = connexion.cursor()
     curseur.execute("""
@@ -47,8 +64,8 @@ async def lire_utilisateurs():
     utilisateurs = curseur.fetchall()
     return utilisateurs
 
-@app.get("/lire_utilisateur_par_id")
-async def lire_utilisateur_par_id(id_utilisateur:Utilisateur):
+@app.get("/lire_utilisateur_par_id") #OK
+async def lire_utilisateur_par_id(id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM utilisateur
@@ -57,18 +74,18 @@ async def lire_utilisateur_par_id(id_utilisateur:Utilisateur):
     utilisateur = curseur.fetchone()
     return utilisateur
 
-@app.put("/mettre_a_jour_utilisateur")
-async def mettre_a_jour_utilisateur(id_utilisateur:Utilisateur, nom:Utilisateur, email:Utilisateur, mdp:Utilisateur, token:Utilisateur):
+@app.put("/mettre_a_jour_utilisateur") #OK
+async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE utilisateur
         SET nom=?, email=?, mdp=?, token=?
         WHERE id=?
-    """, (nom, email, mdp, token, id_utilisateur))
+    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token,id_utilisateur))
     connexion.commit()
 
-@app.delete("/supprimer_utilisateur")
-async def supprimer_utilisateur(id_utilisateur:Utilisateur):
+@app.delete("/supprimer_utilisateur") #OK
+async def supprimer_utilisateur(id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
         DELETE FROM utilisateur
@@ -79,11 +96,11 @@ async def supprimer_utilisateur(id_utilisateur:Utilisateur):
 # --------------------------------------------------------------------------------------------------------------
 class Action(BaseModel):
 
-    id : int
+    # id : int
     prix: float
     entreprise: str
 
-@app.post("/creer_action")
+@app.post("/creer_action") #OK
 async def creer_action(action : Action):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -91,10 +108,9 @@ async def creer_action(action : Action):
         VALUES(?,?)
     """, (action.prix, action.entreprise))
     connexion.commit()
-    action.id = curseur.lastrowid
-    return action
+    
 
-@app.get("/lire_actions")
+@app.get("/lire_actions") #OK
 async def lire_actions():
     curseur = connexion.cursor()
 
@@ -104,8 +120,8 @@ async def lire_actions():
     actions = curseur.fetchall()
     return actions
 
-@app.get ("/lire_action_par_id")
-async def lire_action_par_id(id_action):
+@app.get ("/lire_action_par_id") #OK
+async def lire_action_par_id(id_action:int):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM action
@@ -114,17 +130,17 @@ async def lire_action_par_id(id_action):
     action = curseur.fetchone()
     return action
 
-@app.put ("/mettre_a_jour_action")
-async def mettre_a_jour_action(id_action, prix, entreprise):
+@app.put ("/mettre_a_jour_action") #OK
+async def mettre_a_jour_action(action:Action,id_action:int):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE action
         SET prix=?, entreprise=?
         WHERE id=?
-    """, (prix, entreprise, id_action))
+    """, (action.prix, action.entreprise, id_action))
     connexion.commit()
 
-@app.delete ("/supprimer_action")
+@app.delete ("/supprimer_action") #OK
 async def supprimer_action(id_action):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -140,19 +156,19 @@ async def supprimer_action(id_action):
 class AssoUtilisateurAction(BaseModel):
     id_utilisateur : int
     id_action : int
-    id_asso_utilisateur_action : int
+    # id_asso_utilisateur_action : int
 
-@app.post("/creer_asso_utilisateur_action")
-async def creer_asso_utilisateur_action(id_utilisateur:AssoUtilisateurAction, id_action:AssoUtilisateurAction):
+@app.post("/creer_asso_utilisateur_action") #OK
+async def creer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
     curseur = connexion.cursor()
     curseur.execute("""
         INSERT INTO asso_utilisateur_action(id_utilisateur, id_action)
         VALUES(?,?)
-    """, (id_utilisateur, id_action))
+    """, (id_asso_utilisateur_action.id_utilisateur, id_asso_utilisateur_action.id_action))
     connexion.commit()
-    return curseur.lastrowid
+
     
-@app.get("/lire_assos_utilisateur_action")
+@app.get("/lire_assos_utilisateur_action") #OK
 async def lire_assos_utilisateur_action():
     curseur = connexion.cursor()
     curseur.execute("""
@@ -161,13 +177,13 @@ async def lire_assos_utilisateur_action():
     assos_utilisateur_action = curseur.fetchall()
     return assos_utilisateur_action
     
-@app.get("/lire_asso_utilisateur_action_par_id")
-def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUtilisateurAction):
+@app.get("/lire_asso_utilisateur_action_par_id") #OK
+async def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUtilisateurAction):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM asso_utilisateur_action
-        WHERE id=?
-    """, (id_asso_utilisateur_action,))
+        WHERE id_utilisateur = ? AND id_action = ?
+    """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
     asso_utilisateur_action = curseur.fetchone()
     return asso_utilisateur_action
     
@@ -182,13 +198,13 @@ def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUtilisate
 #     """, (id_utilisateur, id_action, id_asso_utilisateur_action))
 #     connexion.commit()
 
-# app.delete("/supprimer_asso_utilisateur_action")
-# def supprimer_asso_utilisateur_action(id_asso_utilisateur_action):
+# @app.delete("/supprimer_asso_utilisateur_action")
+# def supprimer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
 #     curseur = connexion.cursor()
 #     curseur.execute("""
 #         DELETE FROM asso_utilisateur_action
-#         WHERE id=?
-#     """, (id_asso_utilisateur_action,))
+#         WHERE id_utilisateur = ? AND id_action = ?
+#     """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
 #     connexion.commit()
 
 

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import crud
 import hashlib
 
+
 # pip install "python-jose[cryptography]"
 # pip install "passlib[bcrypt]"
 
