@@ -94,6 +94,22 @@ async def supprimer_utilisateur(id_utilisateur:int):
         WHERE id=?
     """, (id_utilisateur,))
     connexion.commit()
+    
+    
+@app.get("/valider_token")
+async def valider_token(token: str):
+    curseur = connexion.cursor()
+    curseur.execute("""
+        SELECT * FROM utilisateur WHERE token = ?
+    """, (token,))
+    res = curseur.fetchone()
+
+    if res:
+        # le token existe dans la base de données
+        return {"validité_token": True}
+    else:
+        # le token n'existe pas dans la base de données
+        return {"validité_token": False}
 
 # --------------------------------------------------------------------------------------------------------------
 class Action(BaseModel):
@@ -198,7 +214,26 @@ async def actions_disponibles(max_prix: float):
     actions = curseur.fetchall()
     return actions
   
-    
+@app.get("/actions_possedees_non_vendues_suiveurs")
+async def actions_possedees_non_vendues(id_utilisateur: int):
+    curseur = connexion.cursor()
+    curseur.execute("""
+        SELECT id, prix, entreprise 
+        FROM action 
+        WHERE id IN (
+            SELECT id_action 
+            FROM asso_utilisateur_action 
+            WHERE id_utilisateur IN (
+                SELECT id_suivi 
+                FROM asso_suivi_suiveur 
+                WHERE id_suiveur=?
+            )
+        )
+    """, (id_utilisateur,))
+    actions = curseur.fetchall()
+    return actions
+
+
 # app.put("/mettre_a_jour_asso_utilisateur_action")
 # def mettre_a_jour_asso_utilisateur_action(id_asso_utilisateur_action, id_utilisateur:AssoUtilisateurAction, id_action:AssoUtilisateurAction):
 #     curseur = connexion.cursor()
@@ -275,6 +310,22 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
 #         WHERE id=?
 #     """, tuple(update_values))
 #     connexion.commit()
+
+
+@app.get("/lire_asso_suivi_suiveur_par_suivi") #OK
+async def lire_asso_suivi_suiveur_par_suivi(id_suivi: int):
+    curseur = connexion.cursor()
+    curseur.execute("""
+        SELECT * FROM asso_suivi_suiveur
+        WHERE id_suivi=?
+    """, (id_suivi,))
+    assos = curseur.fetchall()
+    return assos
+
+
+
+
+
 
 @app.delete("/supprimer_asso_suivi_suiveur") #OK
 async def supprimer_asso_suivi_suiveur(id_asso:Asso_suivi_suiveur):

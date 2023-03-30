@@ -1,9 +1,9 @@
 FAIT - sectionner les actions disponibles
 FAIT - obtenir le JWT avec le mail et le MDP
-- vérifier la validité du JWT
+FAIT - vérifier la validité du JWT
 FAIT - voir ses actions
-- Voir les actions des personnes que l’on suit
-Obtenir l'id d'un utilisateur depuis son mail et son JWT
+FAIT - Voir les actions des personnes que l’on suit
+ - Obtenir l'id d'un utilisateur depuis son mail et son JWT
 
 Create: 
 FAIT - Créer un utilisateur
