@@ -186,7 +186,16 @@ async def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUti
     """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
     asso_utilisateur_action = curseur.fetchone()
     return asso_utilisateur_action
-    
+
+@app.get("/actions_disponibles") #OK
+async def actions_disponibles(max_prix: float):
+    curseur = connexion.cursor()
+    curseur.execute("""
+        SELECT entreprise,prix FROM action WHERE prix <= ?
+    """, (max_prix,))
+    actions = curseur.fetchall()
+    return actions
+  
     
 # app.put("/mettre_a_jour_asso_utilisateur_action")
 # def mettre_a_jour_asso_utilisateur_action(id_asso_utilisateur_action, id_utilisateur:AssoUtilisateurAction, id_action:AssoUtilisateurAction):
