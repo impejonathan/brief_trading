@@ -1,41 +1,46 @@
-from fastapi import FastAPI
+import hashlib
+import secrets
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
 
-
-connexion = sqlite3.connect('db_trading.db')
 app = FastAPI()
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@app.get("/test")
-async def test():
-    liste = [i for i in range(100) if i%5==0]
-    return{"la liste": liste}
-
-
-# UTILISATEUR ---------------------------------------------------------------------------------------
+connexion = sqlite3.connect('db_trading.db')
 
 class Utilisateur(BaseModel):
-    id : int
     nom: str
     email: str
     mdp: str
-    token: str
-
 
 @app.post("/creer_utilisateur")
 async def creer_utilisateur(utilisateur: Utilisateur):
     curseur = connexion.cursor()
     curseur.execute("""
-        INSERT INTO utilisateur(nom, email, mdp, token)
-        VALUES(?,?,?,?)
-    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token))
-    connexion.commit()
-    utilisateur.id = curseur.lastrowid
-    return utilisateur
+        SELECT * FROM utilisateur WHERE email = ?
+    """, (utilisateur.email,))
+    res = curseur.fetchall()
+
+    if res:
+        raise HTTPException(status_code=400, detail="Un utilisateur avec cet email existe déjà")
+    else:
+        # Hash du mot de passe
+        mdp_hash = hashlib.sha256(utilisateur.mdp.encode()).hexdigest()
+
+        # Création de l'utilisateur avec un token unique
+        token = secrets.token_hex(16)
+        curseur.execute("""
+            INSERT INTO utilisateur(nom, email, mdp, token)
+            VALUES (?, ?, ?, ?)
+        """, (utilisateur.nom, utilisateur.email, mdp_hash, token))
+        connexion.commit()
+
+        # Renvoi de l'utilisateur avec son token
+        return {"id": curseur.lastrowid, "nom": utilisateur.nom, "email": utilisateur.email, "token": token}
+
+
+
+
+
 
 
 @app.get("/lire_utilisateurs")
@@ -48,7 +53,7 @@ async def lire_utilisateurs():
     return utilisateurs
 
 @app.get("/lire_utilisateur_par_id")
-async def lire_utilisateur_par_id(id_utilisateur:Utilisateur):
+async def lire_utilisateur_par_id(id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
         SELECT * FROM utilisateur
@@ -58,7 +63,7 @@ async def lire_utilisateur_par_id(id_utilisateur:Utilisateur):
     return utilisateur
 
 @app.put("/mettre_a_jour_utilisateur")
-async def mettre_a_jour_utilisateur(id_utilisateur:Utilisateur, nom:Utilisateur, email:Utilisateur, mdp:Utilisateur, token:Utilisateur):
+async def mettre_a_jour_utilisateur(id_utilisateur , nom , email , mdp , token ):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE utilisateur
@@ -132,9 +137,9 @@ async def supprimer_action(id_action):
         WHERE id=?
     """, (id_action,))
     connexion.commit()
-    
-    
-    
+
+
+
 # -------------------------------------------------------------------------------------------------------------------------
 
 class AssoUtilisateurAction(BaseModel):
@@ -151,7 +156,7 @@ async def creer_asso_utilisateur_action(id_utilisateur:AssoUtilisateurAction, id
     """, (id_utilisateur, id_action))
     connexion.commit()
     return curseur.lastrowid
-    
+
 @app.get("/lire_assos_utilisateur_action")
 async def lire_assos_utilisateur_action():
     curseur = connexion.cursor()
@@ -160,7 +165,7 @@ async def lire_assos_utilisateur_action():
     """)
     assos_utilisateur_action = curseur.fetchall()
     return assos_utilisateur_action
-    
+
 @app.get("/lire_asso_utilisateur_action_par_id")
 def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUtilisateurAction):
     curseur = connexion.cursor()
@@ -170,8 +175,8 @@ def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action:AssoUtilisate
     """, (id_asso_utilisateur_action,))
     asso_utilisateur_action = curseur.fetchone()
     return asso_utilisateur_action
-    
-    
+
+
 # app.put("/mettre_a_jour_asso_utilisateur_action")
 # def mettre_a_jour_asso_utilisateur_action(id_asso_utilisateur_action, id_utilisateur:AssoUtilisateurAction, id_action:AssoUtilisateurAction):
 #     curseur = connexion.cursor()

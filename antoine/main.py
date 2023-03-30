@@ -38,12 +38,9 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello World 2"}
 
-@app.get("/test")
-async def test():
-    liste = [ i for i in range(100) if i%5==0]
-    return {"liste des multiples de 5" : liste}
+
 
 @app.post("/api/auth/inscription")
 async def inscription(user:UserRegister):
