@@ -2,11 +2,13 @@ from pydantic import BaseModel
 import sqlite3
 import hashlib
 import secrets
+from typing import Optional
 from fastapi import FastAPI, HTTPException
-
+import jwt
 
 connexion = sqlite3.connect('db_trading.db')
 app = FastAPI()
+# ESPACE DE TEST ---------------------------------------------------------------------------------------
 
 
 # UTILISATEUR ---------------------------------------------------------------------------------------
@@ -207,14 +209,15 @@ async def actions_disponibles(max_prix: float):
 #     """, (id_utilisateur, id_action, id_asso_utilisateur_action))
 #     connexion.commit()
 
-# @app.delete("/supprimer_asso_utilisateur_action")
-# def supprimer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
-#     curseur = connexion.cursor()
-#     curseur.execute("""
-#         DELETE FROM asso_utilisateur_action
-#         WHERE id_utilisateur = ? AND id_action = ?
-#     """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
-#     connexion.commit()
+@app.delete("/supprimer_asso_utilisateur_action")
+def supprimer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
+    connexion = sqlite3.connect('db_trading.db')
+    curseur = connexion.cursor()
+    curseur.execute("""
+        DELETE FROM asso_utilisateur_action
+        WHERE id_utilisateur = ? AND id_action = ?
+    """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
+    connexion.commit()
 
 
 class Asso_suivi_suiveur(BaseModel):
@@ -275,6 +278,7 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
 
 @app.delete("/supprimer_asso_suivi_suiveur") #OK
 async def supprimer_asso_suivi_suiveur(id_asso:Asso_suivi_suiveur):
+    connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
     curseur.execute("""
         DELETE FROM asso_suivi_suiveur
