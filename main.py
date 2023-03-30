@@ -282,7 +282,7 @@ async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
     
     
 @app.put ("/mettre_a_jour_action") #OK
-async def mettre_a_jour_action(entreprise:str,prix:float):
+async def mettre_a_jour_action(entreprise:str,prix:Action):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE action
