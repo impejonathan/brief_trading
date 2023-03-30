@@ -93,7 +93,7 @@ async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
 
 # LES READ GET ---------------------------------------------------------------------------------------
 
-@app.get("/id_utilisateur_par_token")
+@app.get("/id_utilisateur_par_token") #OK
 def get_user_id_from_token(token):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -255,17 +255,6 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
 
 
 
-@app.get("/lire_asso_suivi_suiveur_par_suivi") #OK
-async def lire_asso_suivi_suiveur_par_suivi(id_suivi: int):
-    curseur = connexion.cursor()
-    curseur.execute("""
-        SELECT * FROM asso_suivi_suiveur
-        WHERE id_suivi=?
-    """, (id_suivi,))
-    assos = curseur.fetchall()
-    return assos
-
-
 # LES PUT UPDATE ---------------------------------------------------------------------------------------
 
 
@@ -282,15 +271,25 @@ async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
 
 
 # @app.put ("/mettre_a_jour_action") #OK
-async def mettre_a_jour_action(action:Action,id_action:int):
+# async def mettre_a_jour_action(action:Action,id_action:int):
+#     curseur = connexion.cursor()
+#     curseur.execute("""
+#         UPDATE action
+#         SET prix=?, entreprise=?
+#         WHERE id=?
+#     """, (action.prix, action.entreprise, id_action))
+#     connexion.commit()
+    
+    
+@app.put ("/mettre_a_jour_action") #OK
+async def mettre_a_jour_action(entreprise:str,prix:float):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE action
-        SET prix=?, entreprise=?
-        WHERE id=?
-    """, (action.prix, action.entreprise, id_action))
+        SET prix=?
+        WHERE entreprise=?
+    """, (prix,entreprise))
     connexion.commit()
-
 
 # LES DELETE  ---------------------------------------------------------------------------------------
 
