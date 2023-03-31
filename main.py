@@ -305,11 +305,12 @@ async def supprimer_utilisateur(id_utilisateur:int):
     """, (id_utilisateur,))
     connexion.commit()
     
+
+    
 class DeleteAction(BaseModel):
     entreprise : str
     
-
-#@app.delete ("/supprimer_action") #OK
+@app.delete ("/supprimer_action") #OK
 async def supprimer_action(entreprise:DeleteAction):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
