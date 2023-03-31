@@ -2,11 +2,23 @@ from pydantic import BaseModel
 import sqlite3
 import hashlib
 import secrets
-from fastapi import FastAPI, HTTPException
-
+from fastapi import FastAPI, HTTPException,Header
 
 connexion = sqlite3.connect('db_trading.db')
 app = FastAPI(openapi_url="/openapi.json", docs_url="/")
+
+
+
+async def get_user_id_from_token(token: str):
+    curseur = connexion.cursor()
+    curseur.execute("""
+        SELECT id FROM utilisateur
+        WHERE token=?
+    """, (token,))
+    resultat = curseur.fetchone()
+    if resultat is None:
+        raise HTTPException(status_code=401, detail="Token invalide")
+    return resultat[0]
 
 
 # LES CLASS ---------------------------------------------------------------------------------------
@@ -15,7 +27,7 @@ class Utilisateur(BaseModel):
     nom: str
     email: str
     mdp: str
-
+    
 class Action(BaseModel):
 
     prix: float
@@ -63,7 +75,7 @@ async def creer_utilisateur(utilisateur: Utilisateur):
         return {"id": curseur.lastrowid, "nom": utilisateur.nom, "email": utilisateur.email, "token": token}
 
 
-# @app.post("/creer_action") #OK
+#@app.post("/creer_action") #OK
 async def creer_action(action : Action):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -73,31 +85,46 @@ async def creer_action(action : Action):
     connexion.commit()
     
     
-@app.post("/creer_asso_utilisateur_action") #OK
-async def creer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
+@app.post("/creer_asso_utilisateur_action")
+async def creer_asso_utilisateur_action(id_action: int, authorization: str = Header("Authorization")):
+    connexion = sqlite3.connect('db_trading.db')
+
     curseur = connexion.cursor()
+
+    # Récupération de l'id de l'utilisateur à partir du token JWT
+    id_utilisateur = await get_user_id_from_token(authorization)
+
     curseur.execute("""
         INSERT INTO asso_utilisateur_action(id_utilisateur, id_action)
-        VALUES(?,?)
-    """, (id_asso_utilisateur_action.id_utilisateur, id_asso_utilisateur_action.id_action))
+        VALUES (?,?)
+    """, (id_utilisateur, id_action))
     connexion.commit()
+
+    return {"id_utilisateur": id_utilisateur, "id_action": id_action}
+
+
 
     
     
-@app.post("/creer_asso_suivi_suiveur") #OK
-async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
+@app.post("/creer_asso_suivi_suiveur")
+async def creer_asso_suivi_suiveur(id_suivi: int, authorization: str = Header("Authorization")):
+    connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
+
+    # Récupération de l'id de l'utilisateur à partir du token JWT
+    id_suiveur = await get_user_id_from_token(authorization)
+
     curseur.execute("""
         INSERT INTO asso_suivi_suiveur(id_suivi, id_suiveur)
         VALUES (?,?)
-    """, (utilisateur.id_suivi, utilisateur.id_suiveur))
-    utilisateurs = curseur.fetchall()
+    """, (id_suivi, id_suiveur))
     connexion.commit()
-    return utilisateurs
+
+    return {"id_suivi": id_suivi, "id_suiveur": id_suiveur}
 
 # LES READ GET ---------------------------------------------------------------------------------------
 
-@app.get("/id_utilisateur_par_token") #OK
+@app.get("/id_utilisateur_par_token") #OK A CHANGER
 def get_user_id_from_token(token):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -115,7 +142,7 @@ def get_user_id_from_token(token):
 
 
 
-@app.get("/id_utilisateur_par_mail") #OK
+@app.get("/id_utilisateur_par_mail") #OK A CHANGER
 def id_utilisateur_par_mail(email):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -273,10 +300,27 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
 #     connexion.commit()
 
 # Mise à jour d'un utilisateur existant
+async def get_user_id_from_token(token: str):
+    curseur = connexion.cursor()    
+    curseur.execute("""
+        SELECT id FROM utilisateur
+        WHERE token=?
+    """, (token,))
+    resultat = curseur.fetchone()
+    if resultat is None:
+        raise HTTPException(status_code=401, detail="Token invalide")
+    return resultat[0]
+
 
 
 @app.put("/mettre_a_jour_utilisateur")
-async def mettre_a_jour_utilisateur(utilisateur: Utilisateur, id_utilisateur: int):
+async def mettre_a_jour_utilisateur(utilisateur: Utilisateur, authorization: str = Header(None)):
+    if authorization is None:
+        raise HTTPException(status_code=401, detail="Autorisation manquante")
+
+    # Récupération de l'id de l'utilisateur à partir du token JWT
+    id_utilisateur = await get_user_id_from_token(authorization)
+    connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
 
     # Hash du mot de passe
@@ -294,6 +338,9 @@ async def mettre_a_jour_utilisateur(utilisateur: Utilisateur, id_utilisateur: in
 
     # Renvoi de l'utilisateur avec son nouveau token
     return {"id": id_utilisateur, "nom": utilisateur.nom, "email": utilisateur.email, "token": nouveau_token}
+
+
+
 
 
 
@@ -323,7 +370,7 @@ async def mettre_a_jour_action(action:ActionPrix,entreprise:str):
 # LES DELETE  ---------------------------------------------------------------------------------------
 
 
-@app.delete("/supprimer_utilisateur") #OK
+# @app.delete("/supprimer_utilisateur") #OK
 async def supprimer_utilisateur(id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -332,16 +379,16 @@ async def supprimer_utilisateur(id_utilisateur:int):
     """, (id_utilisateur,))
     connexion.commit()
     
-@app.delete ("/supprimer_action") #OK
-async def supprimer_action(id_action):
-    curseur = connexion.cursor()
-    curseur.execute("""
-        DELETE FROM action
-        WHERE id=?
-    """, (id_action,))
-    connexion.commit()
+# @app.delete ("/supprimer_action") #OK
+# async def supprimer_action(id_action):
+#     curseur = connexion.cursor()
+#     curseur.execute("""
+#         DELETE FROM action
+#         WHERE entreprise=?
+#     """, (entreprise.entreprise,))
+#     connexion.commit()
     
-@app.delete ("/supprimer_action") #OK
+# @app.delete ("/supprimer_action") #OK
 async def supprimer_action(entreprise:DeleteAction):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -351,12 +398,37 @@ async def supprimer_action(entreprise:DeleteAction):
     """, (entreprise.entreprise,))
     connexion.commit()
     
-    
-@app.delete("/supprimer_asso_suivi_suiveur") #OK
-async def supprimer_asso_suivi_suiveur(id_asso:Asso_suivi_suiveur):
+
+
+
+
+@app.delete("/supprimer_asso_suivi_suiveur") 
+async def supprimer_asso_suivi_suiveur(id_suivi: int, authorization: str = Header("Authorization")):
+    connexion = sqlite3.connect('db_trading.db')
+
     curseur = connexion.cursor()
+
+
+    # Récupération de l'id_suiveur correspondant au token JWT
+    id_suiveur = await get_user_id_from_token(authorization)
+
+    # Vérification que l'association existe
+    curseur.execute("""
+        SELECT id_suivi, id_suiveur FROM asso_suivi_suiveur
+        WHERE id_suivi=? AND id_suiveur=?
+    """, (id_suivi, id_suiveur))
+    resultat = curseur.fetchone()
+    if resultat is None:
+        raise HTTPException(status_code=404, detail="L'association n'existe pas")
+
+    # Suppression de l'association
     curseur.execute("""
         DELETE FROM asso_suivi_suiveur
         WHERE id_suivi=? AND id_suiveur=?
-    """, (id_asso.id_suivi,id_asso.id_suiveur))
+    """, (id_suivi, id_suiveur))
     connexion.commit()
+
+    return {"message": "L'association a été supprimée avec succès"}
+
+
+

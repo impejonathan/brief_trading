@@ -101,7 +101,7 @@ def creer_asso_suivi_suiveur(id_suivi, id_suiveur):
         VALUES (?,?)
     """, (id_suivi, id_suiveur))
     connexion.commit()
-    return curseur.lastrowid
+    
 
 # def lire_asso_suivi_suiveur_par_id(id_asso):
 #     curseur.execute("""
@@ -128,23 +128,23 @@ def lire_asso_suivi_suiveur_par_suiveur(id_suiveur):
     return assos
 
 
-def mettre_a_jour_asso_suivi_suiveur(id_asso, id_suivi=None, id_suiveur=None):
-    update_clause = ""
-    update_values = []
-    if id_suivi:
-        update_clause += "id_suivi=?, "
-        update_values.append(id_suivi)
-    if id_suiveur:
-        update_clause += "id_suiveur=?, "
-        update_values.append(id_suiveur)
-    update_clause = update_clause[:-2]
-    update_values.append(id_asso)
-    curseur.execute(f"""
-        UPDATE asso_suivi_suiveur
-        SET {update_clause}
-        WHERE id=?
-    """, tuple(update_values))
-    connexion.commit()
+# def mettre_a_jour_asso_suivi_suiveur(id_asso, id_suivi=None, id_suiveur=None):
+#     update_clause = ""
+#     update_values = []
+#     if id_suivi:
+#         update_clause += "id_suivi=?, "
+#         update_values.append(id_suivi)
+#     if id_suiveur:
+#         update_clause += "id_suiveur=?, "
+#         update_values.append(id_suiveur)
+#     update_clause = update_clause[:-2]
+#     update_values.append(id_asso)
+#     curseur.execute(f"""
+#         UPDATE asso_suivi_suiveur
+#         SET {update_clause}
+#         WHERE id=?
+#     """, tuple(update_values))
+#     connexion.commit()
 
 
 def supprimer_asso_suivi_suiveur(id_asso):
@@ -163,7 +163,7 @@ def creer_asso_utilisateur_action(id_utilisateur, id_action):
         VALUES(?,?)
     """, (id_utilisateur, id_action))
     connexion.commit()
-    return curseur.lastrowid
+
     
 def lire_assos_utilisateur_action():
     curseur.execute("""
@@ -172,13 +172,13 @@ def lire_assos_utilisateur_action():
     assos_utilisateur_action = curseur.fetchall()
     return assos_utilisateur_action
     
-def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action):
-    curseur.execute("""
-        SELECT * FROM asso_utilisateur_action
-        WHERE id=?
-    """, (id_asso_utilisateur_action,))
-    asso_utilisateur_action = curseur.fetchone()
-    return asso_utilisateur_action
+# def lire_asso_utilisateur_action_par_id(id_asso_utilisateur_action):
+#     curseur.execute("""
+#         SELECT * FROM asso_utilisateur_action
+#         WHERE id=?
+#     """, (id_asso_utilisateur_action,))
+#     asso_utilisateur_action = curseur.fetchone()
+#     return asso_utilisateur_action
     
 def mettre_a_jour_asso_utilisateur_action(id_asso_utilisateur_action, id_utilisateur, id_action):
     curseur.execute("""
