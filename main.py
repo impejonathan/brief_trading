@@ -61,7 +61,7 @@ async def creer_utilisateur(utilisateur: Utilisateur):
         return {"id": curseur.lastrowid, "nom": utilisateur.nom, "email": utilisateur.email, "token": token}
 
 
-# @app.post("/creer_action") #OK
+#@app.post("/creer_action") #OK
 async def creer_action(action : Action):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -305,13 +305,18 @@ async def supprimer_utilisateur(id_utilisateur:int):
     """, (id_utilisateur,))
     connexion.commit()
     
-# @app.delete ("/supprimer_action") #OK
-async def supprimer_action(id_action):
+class DeleteAction(BaseModel):
+    entreprise : str
+    
+
+#@app.delete ("/supprimer_action") #OK
+async def supprimer_action(entreprise:DeleteAction):
+    connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
     curseur.execute("""
         DELETE FROM action
-        WHERE id=?
-    """, (id_action,))
+        WHERE entreprise=?
+    """, (entreprise.entreprise,))
     connexion.commit()
     
 @app.delete("/supprimer_asso_utilisateur_action")
