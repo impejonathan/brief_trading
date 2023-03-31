@@ -3,7 +3,6 @@ import sqlite3
 import hashlib
 import secrets
 from fastapi import FastAPI, HTTPException
-from jose import JWTError, jwt
 
 
 connexion = sqlite3.connect('db_trading.db')
@@ -16,11 +15,12 @@ class Utilisateur(BaseModel):
     nom: str
     email: str
     mdp: str
-
+    
 class Action(BaseModel):
 
     prix: float
     entreprise: str
+    
 class ActionPrix(BaseModel):
     prix: float
     
@@ -71,7 +71,7 @@ async def creer_action(action : Action):
     connexion.commit()
     
     
-@app.post("/creer_asso_utilisateur_action") #OK
+@app.post("/creer_asso_utilisateur_action") #OK A CHANGER
 async def creer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -82,7 +82,7 @@ async def creer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisate
 
     
     
-@app.post("/creer_asso_suivi_suiveur") #OK
+@app.post("/creer_asso_suivi_suiveur") #OK A CHANGER
 async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -95,7 +95,7 @@ async def creer_asso_suivi_suiveur(utilisateur : Asso_suivi_suiveur):
 
 # LES READ GET ---------------------------------------------------------------------------------------
 
-@app.get("/id_utilisateur_par_token") #OK
+@app.get("/id_utilisateur_par_token") #OK A CHANGER
 def get_user_id_from_token(token):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -113,7 +113,7 @@ def get_user_id_from_token(token):
 
 
 
-@app.get("/id_utilisateur_par_mail") #OK
+@app.get("/id_utilisateur_par_mail") #OK A CHANGER
 def id_utilisateur_par_mail(email):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
@@ -265,9 +265,9 @@ async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE utilisateur
-        SET nom=?, email=?, mdp=?, token=?
+        SET nom=?, email=?, mdp=?
         WHERE id=?
-    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token,id_utilisateur))
+    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp,id_utilisateur))
     connexion.commit()
 
 
