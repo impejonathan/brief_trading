@@ -260,15 +260,41 @@ async def lire_asso_suivi_suiveur_par_suiveur(id_suiveur: int):
 # LES PUT UPDATE ---------------------------------------------------------------------------------------
 
 
-@app.put("/mettre_a_jour_utilisateur") #OK
-async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
+# @app.put("/mettre_a_jour_utilisateur") #OK
+# async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
+#     curseur = connexion.cursor()
+#     curseur.execute("""
+#         UPDATE utilisateur
+#         SET nom=?, email=?, mdp=?
+#         WHERE id=?
+#     """, (utilisateur.nom, utilisateur.email, utilisateur.mdp,id_utilisateur))
+#     connexion.commit()
+
+# Mise à jour d'un utilisateur existant
+
+
+@app.put("/mettre_a_jour_utilisateur")
+async def mettre_a_jour_utilisateur(utilisateur: Utilisateur, id_utilisateur: int):
     curseur = connexion.cursor()
+
+    # Hash du mot de passe
+    mdp_hash = hashlib.sha256(utilisateur.mdp.encode()).hexdigest()
+
+    # Génération du nouveau token
+    nouveau_token = secrets.token_hex(16)
+
     curseur.execute("""
         UPDATE utilisateur
         SET nom=?, email=?, mdp=?, token=?
         WHERE id=?
-    """, (utilisateur.nom, utilisateur.email, utilisateur.mdp, utilisateur.token,id_utilisateur))
+    """, (utilisateur.nom, utilisateur.email, mdp_hash, nouveau_token, id_utilisateur))
     connexion.commit()
+
+    # Renvoi de l'utilisateur avec son nouveau token
+    return {"id": id_utilisateur, "nom": utilisateur.nom, "email": utilisateur.email, "token": nouveau_token}
+
+    # Renvoi de l'utilisateur avec son token
+    return {"id": res[0], "nom": res[1], "email": res[2], "token": res[4]}
 
 
 
@@ -285,6 +311,7 @@ async def mettre_a_jour_utilisateur(utilisateur:Utilisateur,id_utilisateur:int):
     
 @app.put ("/mettre_a_jour_action") #OK
 async def mettre_a_jour_action(action:ActionPrix,entreprise:str):
+    connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
     curseur.execute("""
         UPDATE action
@@ -296,7 +323,7 @@ async def mettre_a_jour_action(action:ActionPrix,entreprise:str):
 # LES DELETE  ---------------------------------------------------------------------------------------
 
 
-# @app.delete("/supprimer_utilisateur") #OK
+@app.delete("/supprimer_utilisateur") #OK
 async def supprimer_utilisateur(id_utilisateur:int):
     curseur = connexion.cursor()
     curseur.execute("""
@@ -305,7 +332,7 @@ async def supprimer_utilisateur(id_utilisateur:int):
     """, (id_utilisateur,))
     connexion.commit()
     
-# @app.delete ("/supprimer_action") #OK
+@app.delete ("/supprimer_action") #OK
 async def supprimer_action(id_action):
     curseur = connexion.cursor()
     curseur.execute("""
