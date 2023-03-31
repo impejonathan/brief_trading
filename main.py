@@ -3,11 +3,10 @@ import sqlite3
 import hashlib
 import secrets
 from fastapi import FastAPI, HTTPException
-from jose import JWTError, jwt
 
 
 connexion = sqlite3.connect('db_trading.db')
-app = FastAPI()
+app = FastAPI(openapi_url="/openapi.json", docs_url="/")
 
 
 # LES CLASS ---------------------------------------------------------------------------------------
@@ -21,6 +20,7 @@ class Action(BaseModel):
 
     prix: float
     entreprise: str
+    
 class ActionPrix(BaseModel):
     prix: float
     
@@ -32,6 +32,8 @@ class Asso_suivi_suiveur(BaseModel):
     id_suivi : int
     id_suiveur : int
 
+class DeleteAction(BaseModel):
+    entreprise : str
 
 # LES POST ---------------------------------------------------------------------------------------
 
@@ -293,8 +295,6 @@ async def mettre_a_jour_utilisateur(utilisateur: Utilisateur, id_utilisateur: in
     # Renvoi de l'utilisateur avec son nouveau token
     return {"id": id_utilisateur, "nom": utilisateur.nom, "email": utilisateur.email, "token": nouveau_token}
 
-    # Renvoi de l'utilisateur avec son token
-    return {"id": res[0], "nom": res[1], "email": res[2], "token": res[4]}
 
 
 
@@ -341,14 +341,14 @@ async def supprimer_action(id_action):
     """, (id_action,))
     connexion.commit()
     
-@app.delete("/supprimer_asso_utilisateur_action")
-def supprimer_asso_utilisateur_action(id_asso_utilisateur_action:AssoUtilisateurAction):
+@app.delete ("/supprimer_action") #OK
+async def supprimer_action(entreprise:DeleteAction):
     connexion = sqlite3.connect('db_trading.db')
     curseur = connexion.cursor()
     curseur.execute("""
-        DELETE FROM asso_utilisateur_action
-        WHERE id_utilisateur = ? AND id_action = ?
-    """, (id_asso_utilisateur_action.id_utilisateur,id_asso_utilisateur_action.id_action))
+        DELETE FROM action
+        WHERE entreprise=?
+    """, (entreprise.entreprise,))
     connexion.commit()
     
     
